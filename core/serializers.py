@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.relations import SlugRelatedField
 
 from core.models import Tag, Post, Profile, Like, Commentary, Follow
 
@@ -35,3 +36,17 @@ class PostSerializer(serializers.ModelSerializer):
     def update(self, instance: Post, validated_data: dict) -> Post:
         validated_data = PostSerializer.handle_tag_creation(validated_data)
         return super().update(instance, validated_data)
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    username = SlugRelatedField(
+        read_only=True,
+        slug_field="username",
+        source="user"
+    )
+
+    class Meta:
+        model = Profile
+        fields = (
+            "id", "username", "image_profile", "description", "privacy_settings"
+        )
