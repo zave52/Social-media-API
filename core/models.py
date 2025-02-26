@@ -95,6 +95,23 @@ class Like(models.Model):
         return self.user
 
 
+class Commentary(models.Model):
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name="comments"
+    )
+    author = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        related_name="comments"
+    )
+    content = models.TextField()
+
+    def __str__(self) -> str:
+        return f"{self.author} commented on {self.post}: {self.content}"
+
+
 class Follow(models.Model):
     follower = models.ForeignKey(
         get_user_model(),
