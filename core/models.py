@@ -35,13 +35,13 @@ class Tag(models.Model):
 
 class Post(models.Model):
     title = models.CharField(max_length=255)
-    text = models.TextField()
+    content = models.TextField()
     image = models.ImageField(
         null=True,
         blank=True,
         upload_to=post_image_upload
     )
-    owner = models.ForeignKey(
+    author = models.ForeignKey(
         get_user_model(),
         on_delete=models.CASCADE,
         related_name="posts"
