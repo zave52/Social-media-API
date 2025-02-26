@@ -93,3 +93,27 @@ class Like(models.Model):
 
     def __str__(self) -> str:
         return self.user
+
+
+class Follow(models.Model):
+    follower = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        related_name="following"
+    )
+    following = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        related_name="followers"
+    )
+
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(
+                fields=("follower", "following"),
+                name="unique_follower_following"
+            )
+        )
+
+    def __str__(self) -> str:
+        return f"{self.follower} follows {self.follower}"
