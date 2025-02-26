@@ -26,6 +26,13 @@ def profile_image_upload(instance: "Profile", filename: str) -> pathlib.Path:
     return image_upload(instance, filename, "upload/profiles/")
 
 
+class Tag(models.Model):
+    name = models.CharField(max_length=50)
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Post(models.Model):
     title = models.CharField(max_length=255)
     text = models.TextField()
@@ -40,7 +47,11 @@ class Post(models.Model):
         related_name="posts"
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    tags =
+    tags = models.ForeignKey(
+        Tag,
+        on_delete=models.CASCADE,
+        related_name="posts"
+    )
 
     def __str__(self) -> str:
         return self.title
