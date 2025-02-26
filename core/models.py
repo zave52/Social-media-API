@@ -85,7 +85,11 @@ class Like(models.Model):
         on_delete=models.CASCADE,
         related_name="likes"
     )
-    user = models.OneToOneField(get_user_model(), related_name="liked")
+    user = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        related_name="liked"
+    )
 
     def __str__(self) -> str:
         return self.user
