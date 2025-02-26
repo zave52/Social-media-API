@@ -6,12 +6,24 @@ from django.db import models
 from django.utils.text import slugify
 
 
-def post_image_upload(instance: "Post", filename: str) -> pathlib.Path:
+def image_upload(
+    instance: models.Model,
+    filename: str,
+    path: str
+) -> pathlib.Path:
     filename = (
-        f"{slugify(instance.title)}-{uuid.uuid4}"
+        f"{slugify(instance)}-{uuid.uuid4}"
         + pathlib.Path(filename).suffix
     )
-    return pathlib.Path("upload/posts/") / pathlib.Path(filename)
+    return pathlib.Path(path) / pathlib.Path(filename)
+
+
+def post_image_upload(instance: "Post", filename: str) -> pathlib.Path:
+    return image_upload(instance, filename, "upload/posts/")
+
+
+def profile_image_upload(instance: "Profile", filename: str) -> pathlib.Path:
+    return image_upload(instance, filename, "upload/profiles/")
 
 
 class Post(models.Model):
@@ -28,6 +40,33 @@ class Post(models.Model):
         related_name="posts"
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    tags =
 
     def __str__(self) -> str:
         return self.title
+
+
+class Profile(models.Model):
+    class PrivacySettings(models.TextChoices):
+        PUBLIC = "public"
+        PRIVATE = "private"
+
+    user = models.OneToOneField(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        related_name="profile"
+    )
+    image_profile = models.ImageField(
+        blank=True,
+        null=True,
+        upload_to=profile_image_upload
+    )
+    description = models.TextField(blank=True, null=True)
+    privacy_settings = models.CharField(
+        max_length=7,
+        choices=PrivacySettings,
+        default=PrivacySettings.PUBLIC
+    )
+
+    def __str__(self) -> str:
+        return f"{self.user.username} profile"
