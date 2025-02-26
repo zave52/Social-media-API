@@ -81,3 +81,15 @@ class Profile(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user.username} profile"
+
+
+class Like(models.Model):
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name="likes"
+    )
+    user = models.OneToOneField(get_user_model(), related_name="liked")
+
+    def __str__(self) -> str:
+        return self.user
