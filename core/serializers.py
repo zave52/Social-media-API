@@ -50,3 +50,15 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = (
             "id", "username", "image_profile", "description", "privacy_settings"
         )
+
+
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = ("id", "post", "user")
+
+
+class CommentarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Commentary
+        fields = ("id", "post", "author", "content")
