@@ -59,8 +59,8 @@ class PostSerializer(serializers.ModelSerializer):
 class PostListSerializer(PostSerializer):
     author = SlugRelatedField(read_only=True, slug_field="username")
     tags = SlugRelatedField(many=True, read_only=True, slug_field="name")
-    likes = serializers.IntegerField(read_only=True, source="likes.count")
-    commentaries = serializers.IntegerField(
+    likes_count = serializers.IntegerField(read_only=True, source="likes.count")
+    commentaries_count = serializers.IntegerField(
         read_only=True,
         source="comments.count"
     )
@@ -70,7 +70,7 @@ class PostListSerializer(PostSerializer):
         fields = (
             "id", "title", "content", "image",
             "author", "created_at", "tags",
-            "likes", "commentaries"
+            "likes_count", "commentaries_count"
         )
 
 
