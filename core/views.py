@@ -5,7 +5,11 @@ from rest_framework.decorators import action
 from rest_framework.reverse import reverse
 
 from core.models import Profile, Follow
-from core.serializers import ProfileSerializer, ProfileListSerializer
+from core.serializers import (
+    ProfileSerializer,
+    ProfileListSerializer,
+    FollowSerializer
+)
 
 
 class ProfileViewSet(
@@ -30,8 +34,7 @@ class ProfileViewSet(
     def my_profile(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         profile = request.user.profile
         return HttpResponseRedirect(
-            reverse("profile-detail"),
-            args=[profile.id]
+            reverse("core:profile-detail", args=[profile.id])
         )
 
     @action(
@@ -57,3 +60,30 @@ class ProfileViewSet(
             user__in=followers.values("follower")
         )
         return super().list(request, *args, **kwargs)
+
+    @action(
+        methods=["GET"],
+        detail=True,
+        url_path="follow"
+    )
+    def follow(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        profile = self.get_object()
+        user = request.user
+
+        follow_data = {
+            "follower": user.id,
+            "following": profile.user.id
+        }
+
+        serializer = FollowSerializer(data=follow_data)
+        serializer.is_valid(raise_exception=True)
+
+        relation = Follow.objects.filter(follower=user, following=profile.user)
+        if not relation.exists():
+            serializer.save()
+        else:
+            relation.delete()
+
+        return HttpResponseRedirect(
+            reverse("core:profile-detail", args=[profile.id])
+        )
