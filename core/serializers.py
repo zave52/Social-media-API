@@ -68,10 +68,17 @@ class PostListSerializer(PostSerializer):
     class Meta:
         model = Post
         fields = (
-            "id", "title", "content", "image",
-            "author", "created_at", "tags",
-            "likes_count", "commentaries_count"
+            PostSerializer.Meta.fields + (
+            "likes_count", "commentaries_count")
         )
+
+
+class PostRetrieveSerializer(PostListSerializer):
+    commentaries = CommentarySerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Post
+        fields = PostListSerializer.Meta.fields + ("commentaries",)
 
 
 class ProfileSerializer(serializers.ModelSerializer):
