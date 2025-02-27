@@ -38,7 +38,7 @@ class PostSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
-class ProfileSerializer(serializers.ModelSerializer):
+class ProfileListSerializer(serializers.ModelSerializer):
     username = SlugRelatedField(
         read_only=True,
         slug_field="username",
