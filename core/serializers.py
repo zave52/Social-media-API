@@ -48,6 +48,8 @@ class PostSerializer(serializers.ModelSerializer):
         return validated_data
 
     def create(self, validated_data: dict) -> Post:
+        user = self.context["request"].user
+        validated_data["author"] = user
         validated_data = PostSerializer.handle_tag_creation(validated_data)
         return super().create(validated_data)
 
