@@ -38,6 +38,19 @@ class PostSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = (
+            "id", "user", "image_profile", "description", "privacy_settings")
+        read_only_fields = ("id", "user")
+
+    def create(self, validated_data: dict) -> Profile:
+        user = self.context["request"].user
+        validated_data["user"] = user
+        return super().create(validated_data)
+
+
 class ProfileListSerializer(serializers.ModelSerializer):
     username = SlugRelatedField(
         read_only=True,
