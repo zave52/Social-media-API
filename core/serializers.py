@@ -38,6 +38,24 @@ class PostSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+class PostListSerializer(PostSerializer):
+    author = SlugRelatedField(read_only=True, slug_field="username")
+    tags = SlugRelatedField(many=True, read_only=True, slug_field="name")
+    likes = serializers.IntegerField(read_only=True, source="likes.count")
+    commentaries = serializers.IntegerField(
+        read_only=True,
+        source="comments.count"
+    )
+
+    class Meta:
+        model = Post
+        fields = (
+            "id", "title", "content", "image",
+            "author", "created_at", "tags",
+            "likes", "commentaries"
+        )
+
+
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
