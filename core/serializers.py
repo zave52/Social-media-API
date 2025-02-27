@@ -10,6 +10,24 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ("id", "name")
 
 
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = ("id", "post", "user")
+
+
+class CommentarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Commentary
+        fields = ("id", "post", "author", "content")
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Follow
+        fields = ("id", "follower", "following")
+
+
 class PostSerializer(serializers.ModelSerializer):
     tags = serializers.CharField(write_only=True, required=False)
 
@@ -81,21 +99,3 @@ class ProfileListSerializer(serializers.ModelSerializer):
         fields = (
             "id", "username", "image_profile", "description", "privacy_settings"
         )
-
-
-class LikeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Like
-        fields = ("id", "post", "user")
-
-
-class CommentarySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Commentary
-        fields = ("id", "post", "author", "content")
-
-
-class FollowSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Follow
-        fields = ("id", "follower", "following")
