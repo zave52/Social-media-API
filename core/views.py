@@ -1,7 +1,7 @@
-from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
-from rest_framework import viewsets, mixins, serializers
+from rest_framework import viewsets, mixins, serializers, status
 from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
 from core.models import Profile, Follow, Post, Like
@@ -11,7 +11,8 @@ from core.serializers import (
     FollowSerializer,
     PostSerializer,
     PostListSerializer,
-    PostRetrieveSerializer
+    PostRetrieveSerializer,
+    CommentarySerializer
 )
 
 
@@ -89,4 +90,89 @@ class ProfileViewSet(
 
         return HttpResponseRedirect(
             reverse("core:profile-detail", args=[profile.id])
+        )
+
+
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+
+    def get_serializer_class(self) -> type(serializers.ModelSerializer):
+        if self.action == "list":
+            return PostListSerializer
+        if self.action == "retrieve":
+            return PostRetrieveSerializer
+        return self.serializer_class
+
+    @action(
+        methods=["GET", "POST"],
+        detail=False,
+        url_path="my-posts"
+    )
+    def my_posts(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        user = request.user
+        self.queryset = self.queryset.filter(author=user)
+        return super().list(request, *args, **kwargs)
+
+    @action(
+        methods=["GET"],
+        detail=False,
+        url_path="following_posts"
+    )
+    def following_posts(
+        self, request: HttpRequest, *args, **kwargs
+    ) -> HttpResponse:
+        user = request.user
+        followings = Follow.objects.filter(follower=user)
+        self.queryset = self.queryset.filter(
+            author__in=followings.values_list("following", flat=True)
+        )
+        return super().list(request, *args, **kwargs)
+
+    @action(
+        methods=["GET"],
+        detail=False,
+        url_path="liked"
+    )
+    def liked(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        user = request.user
+        liked = Like.objects.filter(user=user).values_list(
+            "post_id",
+            flat=True
+        )
+        self.queryset = Post.objects.filter(id__in=liked)
+        return super().list(request, *args, **kwargs)
+
+    @action(
+        methods=["POST"],
+        detail=True,
+        url_path="like"
+    )
+    def like(self, request: HttpRequest, *args, **kwargs) -> Response:
+        post = self.get_object()
+        user = request.user
+
+        like, created = Like.objects.get_or_create(post=post, user=user)
+        if not created:
+            like.delete()
+            return Response({"status": "unliked"}, status=status.HTTP_200_OK)
+
+        return Response({"status": "liked"}, status=status.HTTP_201_CREATED)
+
+    @action(
+        methods=["POST"],
+        detail=True,
+        url_path="comment"
+    )
+    def comment(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        post = self.get_object()
+        serializer = CommentarySerializer(
+            data=request.data, context={"request": request, "post": post}
+        )
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return HttpResponseRedirect(
+            reverse("core:post-detail", args=[post.id])
         )
