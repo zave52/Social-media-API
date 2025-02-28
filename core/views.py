@@ -1,14 +1,17 @@
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
-from rest_framework import generics, viewsets, mixins, serializers
+from rest_framework import viewsets, mixins, serializers
 from rest_framework.decorators import action
 from rest_framework.reverse import reverse
 
-from core.models import Profile, Follow
+from core.models import Profile, Follow, Post, Like
 from core.serializers import (
     ProfileSerializer,
     ProfileListSerializer,
-    FollowSerializer
+    FollowSerializer,
+    PostSerializer,
+    PostListSerializer,
+    PostRetrieveSerializer
 )
 
 
@@ -45,7 +48,7 @@ class ProfileViewSet(
     def followings(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         followings = Follow.objects.filter(follower=request.user)
         self.queryset = self.queryset.filter(
-            user__in=followings.values("following")
+            user__in=followings.values_list("following", flat=True)
         )
         return super().list(request, *args, **kwargs)
 
