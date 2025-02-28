@@ -129,7 +129,7 @@ class Follow(models.Model):
             models.UniqueConstraint(
                 fields=("follower", "following"),
                 name="unique_follower_following"
-            )
+            ),
         )
 
     def __str__(self) -> str:
