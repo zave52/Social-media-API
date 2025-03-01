@@ -98,14 +98,14 @@ class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
 
     def get_serializer_class(self) -> type(serializers.ModelSerializer):
-        if self.action == "list":
+        if self.action in ("list", "liked", "my_posts", "following_posts"):
             return PostListSerializer
         if self.action == "retrieve":
             return PostRetrieveSerializer
         return self.serializer_class
 
     @action(
-        methods=["GET", "POST"],
+        methods=["GET"],
         detail=False,
         url_path="my-posts"
     )
