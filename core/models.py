@@ -130,7 +130,11 @@ class Follow(models.Model):
                 fields=("follower", "following"),
                 name="unique_follower_following"
             ),
+            models.CheckConstraint(
+                check=~models.Q(follower=models.F("following")),
+                name="follower_cannot_follow_self"
+            ),
         )
 
     def __str__(self) -> str:
-        return f"{self.follower} follows {self.follower}"
+        return f"{self.follower} follows {self.following}"
