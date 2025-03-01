@@ -26,7 +26,7 @@ class ProfileViewSet(
     serializer_class = ProfileSerializer
 
     def get_serializer_class(self) -> type(serializers.ModelSerializer):
-        if self.action in ("list", "followings", "followers"):
+        if self.action in ("list", "retrieve", "followings", "followers"):
             return ProfileRetrieveListSerializer
         return self.serializer_class
 
