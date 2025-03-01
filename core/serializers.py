@@ -20,6 +20,14 @@ class CommentarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Commentary
         fields = ("id", "post", "author", "content")
+        read_only_fields = ("id", "post", "author")
+
+    def create(self, validated_data: dict) -> Commentary:
+        user = self.context["request"].user
+        post = self.context["post"]
+        validated_data["author"] = user
+        validated_data["post"] = post
+        return super().create(validated_data)
 
 
 class CommentaryListSerializer(CommentarySerializer):
