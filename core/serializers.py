@@ -121,7 +121,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class ProfileListSerializer(serializers.ModelSerializer):
+class ProfileRetrieveListSerializer(serializers.ModelSerializer):
     username = SlugRelatedField(
         read_only=True,
         slug_field="username",
