@@ -92,7 +92,11 @@ class PostListSerializer(PostSerializer):
 
 
 class PostRetrieveSerializer(PostListSerializer):
-    commentaries = CommentaryListSerializer(many=True, read_only=True)
+    commentaries = CommentaryListSerializer(
+        many=True,
+        read_only=True,
+        source="comments"
+    )
 
     class Meta:
         model = Post
