@@ -38,7 +38,7 @@ class ProfileViewSet(
     def my_profile(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         profile = request.user.profile
         return HttpResponseRedirect(
-            reverse("core:profile-detail", args=[profile.id])
+            reverse("social_media:profile-detail", args=[profile.id])
         )
 
     @action(
@@ -89,7 +89,7 @@ class ProfileViewSet(
             relation.delete()
 
         return HttpResponseRedirect(
-            reverse("core:profile-detail", args=[profile.id])
+            reverse("social_media:profile-detail", args=[profile.id])
         )
 
 
@@ -174,5 +174,5 @@ class PostViewSet(viewsets.ModelViewSet):
         serializer.save()
 
         return HttpResponseRedirect(
-            reverse("core:post-detail", args=[post.id])
+            reverse("social_media:post-detail", args=[post.id])
         )
