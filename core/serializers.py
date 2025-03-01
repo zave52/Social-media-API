@@ -47,7 +47,9 @@ class PostSerializer(serializers.ModelSerializer):
     @staticmethod
     def handle_tag_creation(validated_data: dict) -> dict:
         if "tags" in validated_data:
-            tags = [tag for tag in validated_data.pop("tags").split()]
+            tag_string = validated_data.pop("tags")
+            tags = [tag for tag in tag_string.split()]
+            validated_data["tags"] = []
             for tag in tags:
                 new_tag, _ = Tag.objects.get_or_create(name=tag)
                 validated_data["tags"].append(new_tag)
