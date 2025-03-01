@@ -26,20 +26,30 @@ class ProfileViewSet(
     serializer_class = ProfileSerializer
 
     def get_serializer_class(self) -> type(serializers.ModelSerializer):
-        if self.action == "list":
+        if self.action in ("list", "followings", "followers"):
             return ProfileListSerializer
         return self.serializer_class
 
     @action(
-        methods=["GET"],
+        methods=["GET", "PATCH"],
         detail=False,
         url_path="me"
     )
     def my_profile(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         profile = request.user.profile
-        return HttpResponseRedirect(
-            reverse("social_media:profile-detail", args=[profile.id])
-        )
+        if request.method == "GET":
+            return HttpResponseRedirect(
+                reverse("social_media:profile-detail", args=[profile.id])
+            )
+        elif request.method == "PATCH":
+            serializer = ProfileSerializer(
+                profile,
+                data=request.data,
+                partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
         methods=["GET"],
