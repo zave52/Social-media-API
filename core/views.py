@@ -76,7 +76,7 @@ class ProfileViewSet(
         return super().list(request, *args, **kwargs)
 
     @action(
-        methods=["GET"],
+        methods=["POST"],
         detail=True,
         url_path="follow"
     )
@@ -95,12 +95,13 @@ class ProfileViewSet(
         relation = Follow.objects.filter(follower=user, following=profile.user)
         if not relation.exists():
             serializer.save()
+            return Response(
+                {"status": "followed"},
+                status=status.HTTP_201_CREATED
+            )
         else:
             relation.delete()
-
-        return HttpResponseRedirect(
-            reverse("social_media:profile-detail", args=[profile.id])
-        )
+            return Response({"status": "unfollowed"}, status=status.HTTP_200_OK)
 
 
 class PostViewSet(viewsets.ModelViewSet):
