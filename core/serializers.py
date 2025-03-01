@@ -31,6 +31,11 @@ class CommentarySerializer(serializers.ModelSerializer):
 
 
 class CommentaryListSerializer(CommentarySerializer):
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field="username"
+    )
+
     class Meta:
         model = Commentary
         fields = ("id", "author", "content")
