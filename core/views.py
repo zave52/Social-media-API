@@ -7,7 +7,7 @@ from rest_framework.reverse import reverse
 from core.models import Profile, Follow, Post, Like, Commentary
 from core.serializers import (
     ProfileSerializer,
-    ProfileListSerializer,
+    ProfileRetrieveListSerializer,
     FollowSerializer,
     PostSerializer,
     PostListSerializer,
@@ -27,7 +27,7 @@ class ProfileViewSet(
 
     def get_serializer_class(self) -> type(serializers.ModelSerializer):
         if self.action in ("list", "followings", "followers"):
-            return ProfileListSerializer
+            return ProfileRetrieveListSerializer
         return self.serializer_class
 
     @action(
