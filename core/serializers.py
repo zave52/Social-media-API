@@ -46,6 +46,14 @@ class FollowSerializer(serializers.ModelSerializer):
         model = Follow
         fields = ("id", "follower", "following")
 
+    def validate(self, attrs: dict):
+        if attrs["follower"] == attrs["following"]:
+            raise serializers.ValidationError(
+                {"following": "You cannot follow yourself."}
+            )
+        return attrs
+        
+
 
 class PostSerializer(serializers.ModelSerializer):
     tags = serializers.CharField(write_only=True, required=False)
