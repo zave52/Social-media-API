@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
-from core.models import Profile, Follow, Post, Like
+from core.models import Profile, Follow, Post, Like, Commentary
 from core.serializers import (
     ProfileSerializer,
     ProfileListSerializer,
@@ -169,10 +169,30 @@ class PostViewSet(viewsets.ModelViewSet):
         serializer = CommentarySerializer(
             data=request.data, context={"request": request, "post": post}
         )
-
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
         return HttpResponseRedirect(
             reverse("social_media:post-detail", args=[post.id])
         )
+
+    @action(
+        methods=["DELETE"],
+        detail=True,
+        url_path="comment/(?P<pk_comment>[^/.]+)"
+    )
+    def delete_comment(
+        self, request: HttpRequest, pk_comment: int, *args, **kwargs
+    ) -> HttpResponse:
+        post = self.get_object()
+        try:
+            commentary = post.comments.get(id=pk_comment, author=request.user)
+            commentary.delete()
+            return Response(
+                {"status": "comment deleted"},
+                status=status.HTTP_200_OK
+            )
+        except Commentary.DoesNotExist:
+            return Response(
+                {"error": "Commentary not found or not owned by user."},
+                status=status.HTTP_404_NOT_FOUND
+            )
