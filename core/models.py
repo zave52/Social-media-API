@@ -54,10 +54,6 @@ class Post(models.Model):
 
 
 class Profile(models.Model):
-    class PrivacySettings(models.TextChoices):
-        PUBLIC = "public"
-        PRIVATE = "private"
-
     username = models.CharField(
         max_length=150,
         unique=True,
@@ -75,11 +71,6 @@ class Profile(models.Model):
         upload_to=profile_image_upload
     )
     description = models.TextField(blank=True, null=True)
-    privacy_settings = models.CharField(
-        max_length=7,
-        choices=PrivacySettings,
-        default=PrivacySettings.PUBLIC
-    )
 
     def __str__(self) -> str:
         return f"{self.username} profile"
