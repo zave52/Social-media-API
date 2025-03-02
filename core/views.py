@@ -57,7 +57,7 @@ class ProfileViewSet(
         url_path="followings"
     )
     def followings(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
-        followings = Follow.objects.filter(follower=request.user)
+        followings = Follow.objects.filter(follower=request.user.profile)
         self.queryset = self.queryset.filter(
             user__in=followings.values_list("following", flat=True)
         )
@@ -69,7 +69,7 @@ class ProfileViewSet(
         url_path="followers"
     )
     def followers(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
-        followers = Follow.objects.filter(following=request.user)
+        followers = Follow.objects.filter(following=request.user.profile)
         self.queryset = self.queryset.filter(
             user__in=followers.values("follower")
         )
@@ -82,17 +82,17 @@ class ProfileViewSet(
     )
     def follow(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         profile = self.get_object()
-        user = request.user
+        user = request.user.profile
 
         follow_data = {
             "follower": user.id,
-            "following": profile.user.id
+            "following": profile.id
         }
 
         serializer = FollowSerializer(data=follow_data)
         serializer.is_valid(raise_exception=True)
 
-        relation = Follow.objects.filter(follower=user, following=profile.user)
+        relation = Follow.objects.filter(follower=user.profile, following=profile)
         if not relation.exists():
             serializer.save()
             return Response(
@@ -121,7 +121,7 @@ class PostViewSet(viewsets.ModelViewSet):
         url_path="my-posts"
     )
     def my_posts(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
-        user = request.user
+        user = request.user.profile
         self.queryset = self.queryset.filter(author=user)
         return super().list(request, *args, **kwargs)
 
@@ -133,7 +133,7 @@ class PostViewSet(viewsets.ModelViewSet):
     def following_posts(
         self, request: HttpRequest, *args, **kwargs
     ) -> HttpResponse:
-        user = request.user
+        user = request.user.profile
         followings = Follow.objects.filter(follower=user)
         self.queryset = self.queryset.filter(
             author__in=followings.values_list("following", flat=True)
@@ -146,7 +146,7 @@ class PostViewSet(viewsets.ModelViewSet):
         url_path="liked"
     )
     def liked(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
-        user = request.user
+        user = request.user.profile
         liked = Like.objects.filter(user=user).values_list(
             "post_id",
             flat=True
@@ -161,7 +161,7 @@ class PostViewSet(viewsets.ModelViewSet):
     )
     def like(self, request: HttpRequest, *args, **kwargs) -> Response:
         post = self.get_object()
-        user = request.user
+        user = request.user.profile
 
         like, created = Like.objects.get_or_create(post=post, user=user)
         if not created:
@@ -195,8 +195,9 @@ class PostViewSet(viewsets.ModelViewSet):
         self, request: HttpRequest, pk_comment: int, *args, **kwargs
     ) -> HttpResponse:
         post = self.get_object()
+        user = request.user.profile
         try:
-            commentary = post.comments.get(id=pk_comment, author=request.user)
+            commentary = post.comments.get(id=pk_comment, author=user)
             commentary.delete()
             return Response(
                 {"status": "comment deleted"},
