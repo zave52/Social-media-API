@@ -119,7 +119,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = (
-            "id", "user", "image_profile", "description", "privacy_settings")
+            "id", "user", "username", "image_profile", "description", "privacy_settings")
         read_only_fields = ("id", "user")
 
     def create(self, validated_data: dict) -> Profile:
