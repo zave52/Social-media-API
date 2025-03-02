@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
 from core.models import Profile, Follow, Post, Like, Commentary
+from core.pagination import DefaultPagination
 from core.permissions import IsOwnerOrReadOnly
 from core.serializers import (
     ProfileSerializer,
@@ -27,6 +28,7 @@ class ProfileViewSet(
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated,)
+    pagination_class = DefaultPagination
 
     def get_permissions(self) -> tuple:
         if self.action in ("update", "partial_update"):
@@ -129,6 +131,7 @@ class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = (IsAuthenticated,)
+    pagination_class = DefaultPagination
 
     def get_permissions(self) -> tuple:
         if self.action in (
