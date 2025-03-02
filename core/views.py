@@ -1,5 +1,5 @@
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
-from rest_framework import viewsets, mixins, serializers, status
+from rest_framework import viewsets, mixins, serializers, status, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -29,6 +29,8 @@ class ProfileViewSet(
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated,)
     pagination_class = DefaultPagination
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ("^username", "^user__email")
 
     def get_permissions(self) -> tuple:
         if self.action in ("update", "partial_update"):
@@ -132,6 +134,8 @@ class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     permission_classes = (IsAuthenticated,)
     pagination_class = DefaultPagination
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ("^title", "tags__name")
 
     def get_permissions(self) -> tuple:
         if self.action in (
