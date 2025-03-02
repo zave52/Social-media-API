@@ -43,7 +43,6 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
-    "django_filters",
     "user",
     "core",
 ]
@@ -155,3 +154,7 @@ SPECTACULAR_SETTINGS = {
         "defaultModelExpendDepth": 2,
     },
 }
+
+CELERY_TIMEZONE = "Europe/Kyiv"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
