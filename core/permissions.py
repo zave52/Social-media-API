@@ -10,6 +10,12 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
     Custom permission to only allow owners of an object to edit or delete it.
     """
 
+    def has_permission(self, request: HttpRequest, view: View) -> bool:
+        return bool(
+            request.user
+            and request.user.is_authenticated
+        )
+
     def has_object_permission(
         self,
         request: HttpRequest,
