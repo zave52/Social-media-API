@@ -42,7 +42,7 @@ class Post(models.Model):
         upload_to=post_image_upload
     )
     author = models.ForeignKey(
-        get_user_model(),
+        "Profile",
         on_delete=models.CASCADE,
         related_name="posts"
     )
@@ -58,6 +58,12 @@ class Profile(models.Model):
         PUBLIC = "public"
         PRIVATE = "private"
 
+    username = models.CharField(
+        max_length=150,
+        unique=True,
+        blank=True,
+        default=uuid.uuid4
+    )
     user = models.OneToOneField(
         get_user_model(),
         on_delete=models.CASCADE,
@@ -76,7 +82,7 @@ class Profile(models.Model):
     )
 
     def __str__(self) -> str:
-        return f"{self.user.username} profile"
+        return f"{self.username} profile"
 
 
 class Like(models.Model):
@@ -86,7 +92,7 @@ class Like(models.Model):
         related_name="likes"
     )
     user = models.ForeignKey(
-        get_user_model(),
+        Profile,
         on_delete=models.CASCADE,
         related_name="liked"
     )
@@ -102,7 +108,7 @@ class Commentary(models.Model):
         related_name="comments"
     )
     author = models.ForeignKey(
-        get_user_model(),
+        Profile,
         on_delete=models.CASCADE,
         related_name="comments"
     )
@@ -114,12 +120,12 @@ class Commentary(models.Model):
 
 class Follow(models.Model):
     follower = models.ForeignKey(
-        get_user_model(),
+        Profile,
         on_delete=models.CASCADE,
         related_name="following"
     )
     following = models.ForeignKey(
-        get_user_model(),
+        Profile,
         on_delete=models.CASCADE,
         related_name="followers"
     )
