@@ -1,5 +1,3 @@
-import uuid
-
 from django.contrib.auth.models import (
     AbstractUser,
     UserManager as DjangoUserManager
@@ -44,13 +42,7 @@ class UserManager(DjangoUserManager):
 
 class User(AbstractUser):
     email = models.EmailField(_("email address"), unique=True)
-    username = models.CharField(
-        _("username"),
-        max_length=150,
-        unique=True,
-        blank=True,
-        default=uuid.uuid4
-    )
+    username = None
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
