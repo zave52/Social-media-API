@@ -52,7 +52,6 @@ class FollowSerializer(serializers.ModelSerializer):
                 {"following": "You cannot follow yourself."}
             )
         return attrs
-        
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -130,12 +129,6 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class ProfileRetrieveListSerializer(serializers.ModelSerializer):
-    username = SlugRelatedField(
-        read_only=True,
-        slug_field="username",
-        source="user"
-    )
-
     class Meta:
         model = Profile
         fields = (
