@@ -118,8 +118,7 @@ class PostRetrieveSerializer(PostListSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = (
-            "id", "user", "username", "image_profile", "description", "privacy_settings")
+        fields = ("id", "user", "username", "image_profile", "description")
         read_only_fields = ("id", "user")
 
     def create(self, validated_data: dict) -> Profile:
@@ -131,6 +130,4 @@ class ProfileSerializer(serializers.ModelSerializer):
 class ProfileRetrieveListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = (
-            "id", "username", "image_profile", "description", "privacy_settings"
-        )
+        fields = ("id", "username", "image_profile", "description")
