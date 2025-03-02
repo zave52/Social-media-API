@@ -30,7 +30,7 @@ class ProfileViewSet(
     permission_classes = (IsAuthenticated,)
     pagination_class = DefaultPagination
     filter_backends = (filters.SearchFilter,)
-    search_fields = ("^username", "^user__email")
+    search_fields = ("^username",)
 
     def get_permissions(self) -> tuple:
         if self.action in ("update", "partial_update"):
