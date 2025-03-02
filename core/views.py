@@ -1,3 +1,4 @@
+from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from rest_framework import viewsets, mixins, serializers, status, filters
 from rest_framework.decorators import action
@@ -130,12 +131,24 @@ class ProfileViewSet(
 
 
 class PostViewSet(viewsets.ModelViewSet):
-    queryset = Post.objects.all()
+    queryset = Post.objects.select_related("author").prefetch_related(
+        "tags",
+        "likes",
+        "comments"
+    )
     serializer_class = PostSerializer
     permission_classes = (IsAuthenticated,)
     pagination_class = DefaultPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ("^title", "tags__name")
+
+    def get_queryset(self) -> QuerySet:
+        queryset = self.queryset
+
+        if self.action == "retrieve":
+            queryset = queryset.prefetch_related("comments__author")
+
+        return queryset
 
     def get_permissions(self) -> tuple:
         if self.action in (
