@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - media_volume:/vol/media
+      - static_volume:/vol/static
+    command: >
+      sh -c "python manage.py wait_for_db &&
+            python manage.py migrate &&
+            python manage.py collectstatic --noinput &&
+            python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine3.21
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - postgresql:$PGDATA
+
+  redis:
+    image: redis:alpine3.21
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    command: "celery -A social_media_api worker --loglevel=info"
+    restart: unless-stopped
+    depends_on:
+      - db
+      - app
+      - redis
+
+volumes:
+  media_volume:
+  static_volume:
+  postgresql:
