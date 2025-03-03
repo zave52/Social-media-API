@@ -1,3 +1,10 @@
 from django.contrib import admin
 
-# Register your models here.
+from core.models import Profile, Post, Follow, Like, Commentary, Tag
+
+admin.register(Profile)
+admin.register(Post)
+admin.register(Follow)
+admin.register(Like)
+admin.register(Commentary)
+admin.register(Tag)
