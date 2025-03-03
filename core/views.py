@@ -1,13 +1,16 @@
+from datetime import datetime
+
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.utils.timezone import make_aware
 from rest_framework import viewsets, mixins, serializers, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
+from core.tasks import create_scheduled_post
 from core.models import Profile, Follow, Post, Like, Commentary
 from core.pagination import DefaultPagination
-from core.permissions import IsOwnerOrReadOnly
 from core.serializers import (
     ProfileSerializer,
     ProfileRetrieveListSerializer,
@@ -140,6 +143,30 @@ class PostViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return PostRetrieveSerializer
         return self.serializer_class
+
+    def create(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        if "publish_time" in request.data:
+            publish_time_str = request.data.pop("publish_time")
+            publish_time = make_aware(
+                datetime.strptime(publish_time_str, "%Y-%m-%d %H:%M:%S")
+            )
+
+            user_id = request.user.id
+            validated_data = request.data.copy()
+
+            create_scheduled_post.apply_async(
+                args=(validated_data, user_id),
+                eta=publish_time
+            )
+
+            return Response(
+                {
+                    "status": f"Post is scheduled "
+                              f"for publication at {publish_time}"
+                },
+                status=status.HTTP_202_ACCEPTED
+            )
+        return super().create(request, *args, **kwargs)
 
     @action(
         methods=["GET"],
