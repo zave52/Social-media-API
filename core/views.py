@@ -3,7 +3,7 @@ from datetime import datetime
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.utils.timezone import make_aware
-from rest_framework import viewsets, mixins, serializers, status, filters
+from rest_framework import viewsets, serializers, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
@@ -22,12 +22,7 @@ from core.serializers import (
 )
 
 
-class ProfileViewSet(
-    mixins.ListModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin,
-    viewsets.GenericViewSet
-):
+class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     pagination_class = DefaultPagination
@@ -40,27 +35,37 @@ class ProfileViewSet(
         return self.serializer_class
 
     @action(
-        methods=["GET", "PATCH"],
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
         detail=False,
         url_path="me"
     )
     def my_profile(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         profile = request.user.profile
         if request.method == "GET":
-            return HttpResponseRedirect(
-                reverse("social_media:profile-detail", args=[profile.id])
-            )
-        elif request.method == "PATCH":
+            serializer = ProfileSerializer(profile)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        elif request.method == "POST":
+            serializer = ProfileSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        elif request.method in ("PUT", "PATCH"):
             self.check_object_permissions(request, profile)
-
             serializer = ProfileSerializer(
                 profile,
                 data=request.data,
-                partial=True
+                partial=(request.method == "PATCH")
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
+        elif request.method == "DELETE":
+            self.check_object_permissions(request, profile)
+            profile.delete()
+            return Response(
+                {"status": "profile deleted"},
+                status=status.HTTP_204_NO_CONTENT
+            )
 
     @action(
         methods=["GET"],
