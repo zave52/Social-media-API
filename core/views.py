@@ -288,6 +288,12 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
 
 class PostViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing posts.
+    Provides endpoints for creating, retrieving, updating, deleting, and interacting with posts.
+    Additional endpoints include features like liking, commenting, retrieving user-specific posts, and following posts.
+    """
+
     queryset = Post.objects.select_related("author").prefetch_related(
         "tags",
         "likes",
@@ -313,6 +319,20 @@ class PostViewSet(viewsets.ModelViewSet):
             return PostRetrieveSerializer
         return self.serializer_class
 
+    @extend_schema(
+        summary="Create a new post",
+        description=(
+            "Allows the user to create a new post. If a 'publish_time' is provided, "
+            "the post will be scheduled for publication at the specified time. "
+            "Otherwise, it will be published immediately."
+        ),
+        responses={
+            201: PostSerializer,
+            202: OpenApiParameter("Post scheduled for publication."),
+            400: OpenApiParameter("Validation error."),
+        },
+        request=PostSerializer,
+    )
     def create(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         if "publish_time" in request.data:
             publish_time_str = request.data.pop("publish_time")
@@ -337,16 +357,33 @@ class PostViewSet(viewsets.ModelViewSet):
             )
         return super().create(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="List user's posts",
+        description="Retrieve a list of posts created by the authenticated user.",
+        responses={
+            200: PostListSerializer(many=True)
+        }
+    )
     @action(
         methods=["GET"],
         detail=False,
         url_path="my-posts"
     )
     def my_posts(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        """
+        List posts authored by the authenticated user.
+        """
         user = request.user.profile
         self.queryset = self.queryset.filter(author=user)
         return super().list(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="List posts by followed users",
+        description="Retrieve a paginated list of posts authored by users the authenticated user is following.",
+        responses={
+            200: PostListSerializer(many=True)
+        }
+    )
     @action(
         methods=["GET"],
         detail=False,
@@ -355,6 +392,9 @@ class PostViewSet(viewsets.ModelViewSet):
     def following_posts(
         self, request: HttpRequest, *args, **kwargs
     ) -> HttpResponse:
+        """
+        List posts authored by users the authenticated user is following.
+        """
         user = request.user.profile
         followings = Follow.objects.filter(follower=user)
         self.queryset = self.queryset.filter(
@@ -362,12 +402,22 @@ class PostViewSet(viewsets.ModelViewSet):
         )
         return super().list(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="List liked posts",
+        description="Retrieve a list of posts liked by the authenticated user.",
+        responses={
+            200: PostListSerializer(many=True)
+        }
+    )
     @action(
         methods=["GET"],
         detail=False,
         url_path="liked"
     )
     def liked(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        """
+        List posts liked by the authenticated user.
+        """
         user = request.user.profile
         liked = Like.objects.filter(user=user).values_list(
             "post_id",
@@ -376,12 +426,27 @@ class PostViewSet(viewsets.ModelViewSet):
         self.queryset = Post.objects.filter(id__in=liked)
         return super().list(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="Like or unlike a post",
+        description=(
+            "Allows the authenticated user to like or unlike a specific post. "
+            "If the user has already liked the post, this action will unlike it."
+        ),
+        responses={
+            201: OpenApiParameter("Status: liked"),
+            200: OpenApiParameter("Status: unliked"),
+            400: OpenApiParameter("Validation error."),
+        }
+    )
     @action(
         methods=["POST"],
         detail=True,
         url_path="like"
     )
     def like(self, request: HttpRequest, *args, **kwargs) -> Response:
+        """
+        Like or unlike a specific post.
+        """
         post = self.get_object()
         user = request.user.profile
 
@@ -392,12 +457,24 @@ class PostViewSet(viewsets.ModelViewSet):
 
         return Response({"status": "liked"}, status=status.HTTP_201_CREATED)
 
+    @extend_schema(
+        summary="Add a comment to a post",
+        description="Allows the authenticated user to add a comment to a specific post.",
+        request=CommentarySerializer,
+        responses={
+            201: CommentarySerializer,
+            400: OpenApiParameter("Validation error."),
+        }
+    )
     @action(
         methods=["POST"],
         detail=True,
         url_path="comment"
     )
     def comment(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        """
+        Add a comment to a specific post.
+        """
         post = self.get_object()
         serializer = CommentarySerializer(
             data=request.data, context={"request": request, "post": post}
@@ -408,6 +485,17 @@ class PostViewSet(viewsets.ModelViewSet):
             reverse("social_media:post-detail", args=[post.id])
         )
 
+    @extend_schema(
+        summary="Delete a comment on a post",
+        description=(
+            "Allows the authenticated user to delete their comment on a specific post. "
+            "Returns a 404 error if the comment does not exist or is not owned by the user."
+        ),
+        responses={
+            200: OpenApiParameter("Comment deleted successfully."),
+            404: OpenApiParameter("Comment not found or not owned by user.")
+        }
+    )
     @action(
         methods=["DELETE"],
         detail=True,
@@ -416,6 +504,9 @@ class PostViewSet(viewsets.ModelViewSet):
     def delete_comment(
         self, request: HttpRequest, pk_comment: int, *args, **kwargs
     ) -> HttpResponse:
+        """
+        Delete a user's comment from a specific post.
+        """
         post = self.get_object()
         user = request.user.profile
         try:
@@ -430,3 +521,88 @@ class PostViewSet(viewsets.ModelViewSet):
                 {"error": "Commentary not found or not owned by user."},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+    @extend_schema(
+        summary="List all posts",
+        description="Retrieve a paginated list of all posts.",
+        responses={
+            200: PostListSerializer(many=True)
+        },
+        parameters=[
+            OpenApiParameter(
+                name="search",
+                description="Search posts by title or tag name. Prefix search "
+                            "with `^` for exact match. (ex. ?search=tag)",
+                required=False,
+                type=str
+            )
+        ]
+    )
+    def list(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        """
+        List all available posts.
+        """
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Retrieve a specific post",
+        description="Retrieve details of a specific post, "
+                    "including comments, likes, and tags.",
+        responses={
+            200: PostRetrieveSerializer,
+            404: OpenApiParameter("Post not found.")
+        }
+    )
+    def retrieve(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        """
+        Retrieve details of a specific post.
+        """
+        return super().retrieve(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Update an existing post",
+        description="Update an existing post created by the authenticated user.",
+        request=PostSerializer,
+        responses={
+            200: PostSerializer,
+            400: OpenApiParameter("Validation error."),
+            403: OpenApiParameter("Permission denied.")
+        }
+    )
+    def update(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        """
+        Update an existing post.
+        """
+        return super().update(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Partially update an existing post",
+        description="Update specific fields of an existing post.",
+        request=PostSerializer,
+        responses={
+            200: PostSerializer,
+            400: OpenApiParameter("Validation error."),
+            403: OpenApiParameter("Permission denied.")
+        }
+    )
+    def partial_update(
+        self, request: HttpRequest, *args, **kwargs
+    ) -> HttpResponse:
+        """
+        Partially update specific fields of a post.
+        """
+        return super().partial_update(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Delete a post",
+        description="Delete an existing post created by the authenticated user.",
+        responses={
+            204: OpenApiParameter("Post successfully deleted."),
+            403: OpenApiParameter("Permission denied."),
+        }
+    )
+    def destroy(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        """
+        Permanently delete a post.
+        """
+        return super().destroy(request, *args, **kwargs)
